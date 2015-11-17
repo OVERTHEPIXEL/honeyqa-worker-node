@@ -1,0 +1,19 @@
+{
+  "name": "oqa-worker-node",
+  "version": "1.0.0",
+  "description": "oqa worker",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OVERTHEPIXEL/oqa-worker-node.git"
+  },
+  "author": "Sunghoon Kang",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/OVERTHEPIXEL/oqa-worker-node/issues"
+  },
+  "homepage": "https://github.com/OVERTHEPIXEL/oqa-worker-node#readme"
+}
