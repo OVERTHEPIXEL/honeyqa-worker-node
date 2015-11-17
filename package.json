@@ -15,5 +15,10 @@
   "bugs": {
     "url": "https://github.com/OVERTHEPIXEL/oqa-worker-node/issues"
   },
-  "homepage": "https://github.com/OVERTHEPIXEL/oqa-worker-node#readme"
+  "homepage": "https://github.com/OVERTHEPIXEL/oqa-worker-node#readme",
+  "dependencies": {
+    "amqplib": "^0.4.0",
+    "mysql": "^2.9.0",
+    "redis": "^2.3.0"
+  }
 }
