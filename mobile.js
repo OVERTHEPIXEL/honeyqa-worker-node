@@ -1,11 +1,12 @@
 var amqp = require('amqplib/callback_api');
 var async = require('async');
 var crypto = require('crypto');
+var java = require('java');
 var mysql = require('mysql');
 var redis = require('redis'),
     redisClient = redis.createClient('redis://host:port');
 
-var QUEUE_NAME = 'oqa_android_log_queue';
+var QUEUE_NAME = 'oqa_mobile_log_queue';
 
 function listen(ch, pool) {
     ch.assertQueue(QUEUE_NAME, {
