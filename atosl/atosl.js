@@ -1,5 +1,5 @@
 var java = require("java");
-java.classpath.push("./src");
+java.classpath.push("./atosl/src");
 
 var Atosl = java.newInstanceSync("io.honeyqa.atosl.Atosl");
 
