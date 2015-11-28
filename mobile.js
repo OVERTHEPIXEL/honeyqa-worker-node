@@ -1,8 +1,7 @@
 var amqp = require('amqplib/callback_api');
 var async = require('async');
-var atosl = require('./atosl/atosl.js')
+var atosl = require('./atosl/atosl.js');
 var crypto = require('crypto');
-var java = require('java');
 var mysql = require('mysql');
 var redis = require('redis'),
     redisClient = redis.createClient('redis://host:port');
