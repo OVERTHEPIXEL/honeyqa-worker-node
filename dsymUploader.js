@@ -46,90 +46,90 @@ app.post('/dsym', upload.single('dsym'), function(req, res, next) {
     var dsym = req.file;
     var pid;
     redisClient.hget('hqa_projects', req.body.apikey, function(err, pid) {
-            if (err) {
-                res.status(500);
+        if (err) {
+            res.status(500);
+            res.json({
+                message: "Redis error"
+            });
+        } else {
+            if (pid == null) {
+                res.status(400);
                 res.json({
-                    message: "Redis error"
+                    message: "API Key not exists"
                 });
             } else {
-                if (pid == null) {
-                    res.status(400);
-                    res.json({
-                        message: "API Key not exists"
-                    });
-                } else {
-                    var baseDir = './' + dsym.filename.split('.')[0];
-                    var zip = new AdmZip('./' + dsym.filename);
-                    zip.extractAllTo(baseDir, true);
-                    fse.removeSync('./' + dsym.filename);
-                    var folder = fs.readdirSync(baseDir + '/', 'utf8');
-                    async.eachSeries(folder, function iterator(f, callback) {
-                                if (f.indexOf(".app.dSYM") != -1) {
-                                    var raw_info = fs.readFileSync(baseDir + '/' + f + '/Contents/Info.plist', 'utf8');
-                                    var info = plist.parse(raw_info);
-                                    var id = info["CFBundleIdentifier"].split('.');
-                                    var version = info["CFBundleShortVersionString"];
-                                    var dPath = baseDir + '/' + f + '/Contents/Resources/DWARF/' + id[id.length - 1];
-                                    var arch = atosl.getArch(dPath);
-                                    if (arch != null) {
-                                        pool.getConnection(function(err, connection) {
-                                                if (!err) {
-                                                    fse.copySync(dPath, '/root/dsym' + dsym.filename.split('.')[0])
-                                                    async.eachSeries(arch, function iterator(a, insertCallback) {
-                                                            var uuid = atosl.getUUID(a, dPath);
-                                                            if (uuid != null) {
-                                                                connection.query('INSERT into dsym (architecture,uuid,filename,uploadtime,pid) VALUES (?,?,?,NOW(),?)', [a, uuid, '/root/dsym' + dsym.filename.split('.')[0], pid], function(err, rows) {
-                                                                    if (err) {
-                                                                        insertCallback(err);
-                                                                    } else {
-                                                                        insertCallback();
-                                                                    }
-                                                                });
-                                                            }
-                                                        }),
-                                                        function(err) {
-                                                            if (err) {
-                                                                return callback(err, null);
-                                                            } else {
-                                                                var result = {
-                                                                    status: 200,
-                                                                    message: "success"
-                                                                };
-                                                                return callback(result);
-                                                            }
-                                                        });
-                                            } else {
-                                                var result = {
-                                                    status: 500,
-                                                    message: "cannot connect to db"
-                                                };
-                                                return callback(result);
-                                            }
-                                        });
-                                } else {
-                                    var result = {
-                                        status: 400,
-                                        message: "Cannot parse data from dSYM"
-                                    };
-                                    return callback(result);
-                                }
+                var baseDir = './' + dsym.filename.split('.')[0];
+                var zip = new AdmZip('./' + dsym.filename);
+                zip.extractAllTo(baseDir, true);
+                fse.removeSync('./' + dsym.filename);
+                var folder = fs.readdirSync(baseDir + '/', 'utf8');
+                async.eachSeries(folder, function iterator(f, callback) {
+                        if (f.indexOf(".app.dSYM") != -1) {
+                            var raw_info = fs.readFileSync(baseDir + '/' + f + '/Contents/Info.plist', 'utf8');
+                            var info = plist.parse(raw_info);
+                            var id = info["CFBundleIdentifier"].split('.');
+                            var version = info["CFBundleShortVersionString"];
+                            var dPath = baseDir + '/' + f + '/Contents/Resources/DWARF/' + id[id.length - 1];
+                            var arch = atosl.getArch(dPath);
+                            if (arch != null) {
+                                pool.getConnection(function(err, connection) {
+                                    if (!err) {
+                                        fse.copySync(dPath, '/root/dsym' + dsym.filename.split('.')[0])
+                                        async.eachSeries(arch, function iterator(a, insertCallback) {
+                                                var uuid = atosl.getUUID(a, dPath);
+                                                if (uuid != null) {
+                                                    connection.query('INSERT into dsym (architecture,uuid,filename,uploadtime,pid) VALUES (?,?,?,NOW(),?)', [a, uuid, '/root/dsym' + dsym.filename.split('.')[0], pid], function(err, rows) {
+                                                        if (err) {
+                                                            insertCallback(err);
+                                                        } else {
+                                                            insertCallback();
+                                                        }
+                                                    });
+                                                }
+                                            },
+                                            function(err) {
+                                                if (err) {
+                                                    return callback(err, null);
+                                                } else {
+                                                    var result = {
+                                                        status: 200,
+                                                        message: "success"
+                                                    };
+                                                    return callback(result);
+                                                }
+                                            });
+                                    } else {
+                                        var result = {
+                                            status: 500,
+                                            message: "cannot connect to db"
+                                        };
+                                        return callback(result);
+                                    }
+                                });
                             } else {
-                                callback();
-                            }
-                        },
-                        function(err, result) {
-                            if (!result) {
-                                result = {
+                                var result = {
                                     status: 400,
-                                    message: "Cannot parse dSYM"
+                                    message: "Cannot parse data from dSYM"
                                 };
+                                return callback(result);
                             }
-                            fse.removeSync(baseDir);
-                            res.status(result.status);
-                            res.json({
-                                message: result.message
-                            });
+                        } else {
+                            callback();
+                        }
+                    },
+                    function(err, result) {
+                        if (!result) {
+                            result = {
+                                status: 400,
+                                message: "Cannot parse dSYM"
+                            };
+                        }
+                        fse.removeSync(baseDir);
+                        res.status(result.status);
+                        res.json({
+                            message: result.message
                         });
+                    });
             }
         }
     });
