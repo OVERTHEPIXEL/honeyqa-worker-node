@@ -16,7 +16,7 @@ var redis = require('redis'),
 var upload = multer({
     storage: multer.diskStorage({
         destination: function(req, file, cb) {
-            cb(null, '/root/dsym')
+            cb(null, '/root/dsymzip')
         },
         filename: function(req, file, cb) {
             cb(null, hash() + '-' + Date.now() + '.zip')
@@ -25,7 +25,9 @@ var upload = multer({
 })
 
 var app = express();
-app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
 
 var pool = mysql.createPool({
     host: 'host',
@@ -43,8 +45,6 @@ function hash() {
 }
 
 app.post('/dsym', upload.single('dsym'), function(req, res, next) {
-    var dsym = req.file;
-    var pid;
     redisClient.hget('hqa_projects', req.body.apikey, function(err, pid) {
         if (err) {
             res.status(500);
@@ -58,10 +58,11 @@ app.post('/dsym', upload.single('dsym'), function(req, res, next) {
                     message: "API Key not exists"
                 });
             } else {
-                var baseDir = './' + dsym.filename.split('.')[0];
-                var zip = new AdmZip('./' + dsym.filename);
+                var dsym = req.file;
+                var baseDir = '/root/dsymzip/' + dsym.filename.split('.')[0];
+                var zip = new AdmZip('/root/dsymzip/' + dsym.filename);
                 zip.extractAllTo(baseDir, true);
-                fse.removeSync('./' + dsym.filename);
+                fse.removeSync('/root/dsymzip/' + dsym.filename);
                 var folder = fs.readdirSync(baseDir + '/', 'utf8');
                 async.eachSeries(folder, function iterator(f, callback) {
                         if (f.indexOf(".app.dSYM") != -1) {
@@ -74,11 +75,11 @@ app.post('/dsym', upload.single('dsym'), function(req, res, next) {
                             if (arch != null) {
                                 pool.getConnection(function(err, connection) {
                                     if (!err) {
-                                        fse.copySync(dPath, '/root/dsym' + dsym.filename.split('.')[0])
+                                        fse.copySync(dPath, '/root/dsym/' + dsym.filename.split('.')[0])
                                         async.eachSeries(arch, function iterator(a, insertCallback) {
                                                 var uuid = atosl.getUUID(a, dPath);
                                                 if (uuid != null) {
-                                                    connection.query('INSERT into dsym (architecture,uuid,filename,uploadtime,pid) VALUES (?,?,?,NOW(),?)', [a, uuid, '/root/dsym' + dsym.filename.split('.')[0], pid], function(err, rows) {
+                                                    connection.query('INSERT into dsym (architecture,uuid,filename,uploadtime,pid) VALUES (?,?,?,NOW(),?)', [a, uuid, '/root/dsym/' + dsym.filename.split('.')[0], pid], function(err, rows) {
                                                         if (err) {
                                                             insertCallback(err);
                                                         } else {
@@ -89,7 +90,7 @@ app.post('/dsym', upload.single('dsym'), function(req, res, next) {
                                             },
                                             function(err) {
                                                 if (err) {
-                                                    return callback(err, null);
+                                                    return callback(null);
                                                 } else {
                                                     var result = {
                                                         status: 200,
@@ -117,8 +118,8 @@ app.post('/dsym', upload.single('dsym'), function(req, res, next) {
                             callback();
                         }
                     },
-                    function(err, result) {
-                        if (!result) {
+                    function(result) {
+                        if (result == null) {
                             result = {
                                 status: 400,
                                 message: "Cannot parse dSYM"
