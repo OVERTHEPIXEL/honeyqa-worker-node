@@ -15,8 +15,9 @@ function listen(ch, pool) {
     ch.consume(QUEUE_NAME, function(msg) {
         pool.getConnection(function(err, connection) {
             if (!err) {
+                console.log(msg.content.toString())
                 var j = JSON.parse(msg.content.toString());
-                if (j.hasOwnProperty('hqaData')) {
+                if (j.hasOwnProperty('URQAData')) {
                     // iOS
                     async.waterfall([
                         function(callback) {
@@ -64,36 +65,36 @@ function listen(ch, pool) {
                             if (path != null && arch != null) {
                                 var threadlog = '';
                                 var crashedlog = ''; // for callstack key
-                                for (var a = 0; a < j.hqaData.thread.length; a++) {
+                                for (var a = 0; a < j.URQAData.thread.length; a++) {
                                     var isCrashed = false;
                                     var thread = '';
                                     if (a != 0) {
                                         thread = '\n\n';
                                     }
-                                    if (j.hqaData.thread[a].isCrashed == 1) {
+                                    if (j.URQAData.thread[a].isCrashed == 1) {
                                         isCrashed = true;
                                         thread += 'Thread ' + a + ' (Crashed)';
                                     } else {
                                         thread += 'Thread ' + a;
                                     }
-                                    for (var b = 0; b < j.hqaData.thread[a].frame.length; b++) {
+                                    for (var b = 0; b < j.URQAData.thread[a].frame.length; b++) {
                                         var result = '\n';
-                                        var data = [j.hqaData.thread[a].frame[b].baseAddress, j.hqaData.thread[a].frame[b].frameIndex];
-                                        if (j.hqaData.thread[a].frame[b].imageName == j.exename) {
+                                        var data = [j.URQAData.thread[a].frame[b].baseAddress, j.URQAData.thread[a].frame[b].frameIndex];
+                                        if (j.URQAData.thread[a].frame[b].imageName == j.exename) {
                                             var symbolicated = atosl.symbolicate(arch, path, data);
                                             if (symbolicated == '' || symbolicated == null) {
-                                                result += j.hqaData.thread[a].frame[b].imageName;
-                                                result += ' ' + j.hqaData.thread[a].frame[b].frameIndex;
-                                                result += '  ' + j.hqaData.thread[a].frame[b].baseAddress;
-                                                result += ' + ' + j.hqaData.thread[a].frame[b].offset;
+                                                result += j.URQAData.thread[a].frame[b].imageName;
+                                                result += ' ' + j.URQAData.thread[a].frame[b].frameIndex;
+                                                result += '  ' + j.URQAData.thread[a].frame[b].baseAddress;
+                                                result += ' + ' + j.URQAData.thread[a].frame[b].offset;
                                             } else {
                                                 result += symbolicated;
                                             }
                                         } else {
-                                            result += j.hqaData.thread[a].frame[b].imageName;
-                                            result += ' ' + j.hqaData.thread[a].frame[b].frameIndex;
-                                            result += '  ' + j.hqaData.thread[a].frame[b].baseAddress;
-                                            result += ' + ' + j.hqaData.thread[a].frame[b].offset;
+                                            result += j.URQAData.thread[a].frame[b].imageName;
+                                            result += ' ' + j.URQAData.thread[a].frame[b].frameIndex;
+                                            result += '  ' + j.URQAData.thread[a].frame[b].baseAddress;
+                                            result += ' + ' + j.URQAData.thread[a].frame[b].offset;
                                         }
                                         thread += result;
                                         if (isCrashed) {
@@ -109,24 +110,24 @@ function listen(ch, pool) {
                                 // dSYM not exists
                                 var threadlog = '';
                                 var crashedlog = ''; // for callstack key
-                                for (var a = 0; a < j.hqaData.thread.length; a++) {
+                                for (var a = 0; a < j.URQAData.thread.length; a++) {
                                     var isCrashed = false;
                                     var thread = '';
                                     if (a != 0) {
                                         thread = '\n\n';
                                     }
-                                    if (j.hqaData.thread[a].isCrashed == 1) {
+                                    if (j.URQAData.thread[a].isCrashed == 1) {
                                         isCrashed = true;
                                         thread += 'Thread ' + a + ' (Crashed)';
                                     } else {
                                         thread += 'Thread ' + a;
                                     }
-                                    for (var b = 0; b < j.hqaData.thread[a].frame.length; b++) {
+                                    for (var b = 0; b < j.URQAData.thread[a].frame.length; b++) {
                                         var result = '\n';
-                                        result += j.hqaData.thread[a].frame[b].imageName;
-                                        result += ' ' + j.hqaData.thread[a].frame[b].frameIndex;
-                                        result += '  ' + j.hqaData.thread[a].frame[b].baseAddress;
-                                        result += ' + ' + j.hqaData.thread[a].frame[b].offset;
+                                        result += j.URQAData.thread[a].frame[b].imageName;
+                                        result += ' ' + j.URQAData.thread[a].frame[b].frameIndex;
+                                        result += '  ' + j.URQAData.thread[a].frame[b].baseAddress;
+                                        result += ' + ' + j.URQAData.thread[a].frame[b].offset;
                                         thread += result;
                                         if (isCrashed == true) {
                                             crashedlog += result;
